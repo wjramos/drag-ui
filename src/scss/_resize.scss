@@ -1,0 +1,95 @@
+.ui-resizable {
+    position: relative;
+
+    &-handle {
+        display: block;
+        position: absolute;
+        font-size: 0.1px;
+    }
+    &-handle &-disabled,
+    &-autohide {
+        display: none;
+    }
+
+    /* Cursor delegation */
+    &-n {
+        cursor: n-resize;
+
+        &w {
+            cursor: nw-resize;
+
+        }
+        &e {
+            cursor: ne-resize;
+        }
+    }
+    &-s {
+        cursor: s-resize;
+        &e {
+            cursor: se-resize;
+        }
+        &w {
+            cursor: sw-resize;
+        }
+    }
+    &-e {
+        cursor: e-resize;
+    }
+    &-w {
+        cursor: w-resize;
+    }
+
+    /* Horizontal */
+    &-e,
+    &-w {
+        top: 0;
+        width: 7px;
+        height: 100%;
+
+    }
+
+    /* Vertical */
+    &-n,
+    &-s {
+        left: 0;
+        width: 100%;
+        height: 7px;
+    }
+
+    /* North */
+    &-n,
+    &-nw,
+    &-ne {
+        top: -5px;
+    }
+
+    /* Corners */
+    &-nw,
+    &-ne,
+    &-sw,
+    &-se {
+        width: 9px;
+        height: 9px;
+    }
+
+    /* South */
+    &-s,
+    &-sw,
+    &-se {
+        bottom: -5px;
+    }
+
+    /* West */
+    &-w,
+    &-sw,
+    &-nw {
+        left: -5px;
+    }
+
+    /* East */
+    &-e,
+    &-se,
+    &-ne {
+        right: -5px;
+    }
+}
