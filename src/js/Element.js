@@ -8,13 +8,13 @@ import {
 } from 'jquery-ui';
 
 export default class Element {
-    constructor ( element = { }, $parent ) {
+    constructor ( element = { }, parent ) {
 
         // Use to store jQuery object to only instanciate once per element
         const frame = this.frame = element.frame || { };
         this.unique_id = element.unique_id;
         this.type      = element.type;
-        this.$parent   = $parent || $( '.phone' );
+        this.parent    = parent;
         this.children  = [];
 
         // Create DOM element -- store initial state
@@ -35,9 +35,15 @@ export default class Element {
 
         } ).disableSelection( );
 
-        // Recursively add child element classes-- set parent to current element
+        // Recursively add child element classes-- set parent pointer to current Element
         if ( element.elements ) {
-            element.elements.forEach( element => this.children.push( new Element( element, this.$elem ) ) );
+            element.elements.forEach( element => this.children.push( new Element( element, this ) ) );
+        }
+
+        this.bind( this.$elem );
+
+        if ( this.parent ) {
+            this.bind( this.parent.$elem );
         }
 
         // Delegate events and draw
@@ -62,31 +68,35 @@ export default class Element {
         } );
 
         $elem.on( 'drop', function ( event, ui ) {
-
+            /* Prevent event bubbling */
             event.stopPropagation();
 
             /* Reset elem as dropped elem */
             self.$elem = ui.draggable;
 
             /* If current element is not already a child of drop point position and rebound */
-            if ( self.$elem.parent( )[ 0 ] !== self.$parent[ 0 ] ) {
-                let parentOffset = self.$parent.offset();
+            if ( self.parent && self.$elem.parent( )[ 0 ] !== self.parent.$elem[ 0 ] ) {
+                let parentOffset = self.parent.$elem.offset();
                 let offset = self.$elem.offset();
 
                 /* Recalculate offset */
                 self.$elem.detach( )
                           .css( 'top', offset.top - parentOffset.top )
                           .css( 'left', offset.left - parentOffset.left )
-                          .appendTo( self.$parent );
+                          .appendTo( self.parent.$elem );
 
-                /* Reset draggable bounds */
-                return self.$elem.draggable( 'option', { containment: 'parent', connectWith: self.$parent } ).droppable( 'option', { hoverClass: 'drop-hover' } );
+                self.bind( self.parent.$elem );
+
+                /* Reset draggable bounds -- connect to new parent */
+                return self.$elem.draggable( 'option', { containment: 'parent', connectWith: self.parent.$elem } ).droppable( 'option', { hoverClass: 'drop-hover' } );
             }
         } );
 
         $elem.on( 'dropover', function( event, ui ) {
-            /* Update parent when context changes */
-            self.$parent = $( this );
+            if ( self.parent ) {
+                /* Update parent when context changes */
+                return self.parent.$elem = self.bind( $( this ) );
+            }
         } );
 
 
@@ -95,7 +105,7 @@ export default class Element {
 
     bind ( $target ) {
         /* Bind draggable and drag event callback -- needs to be reset when DOM changes */
-        $target.draggable( {
+        return $target.draggable( {
             containment: 'parent',
             connectWith: '.phone',
             cursor:      'move',
@@ -112,14 +122,15 @@ export default class Element {
             containment: 'parent',
             handles:     'all'
         } );
-
-        return this;
     }
 
     place ( ) {
         /* Insert / Re-insert */
-        this.$elem.appendTo( this.$parent );
-
+        if ( this.parent ) {
+            this.$elem.appendTo( this.parent.$elem );
+        } else {
+            this.$elem.appendTo( '.phone' );
+        }
         return this.draw( );
     }
 
