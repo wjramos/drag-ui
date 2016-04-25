@@ -14,7 +14,7 @@ export default class Element {
         const frame = this.frame = element.frame || { };
         this.unique_id = element.unique_id;
         this.type      = element.type;
-        this.parent    = parent;
+        this.parent    = parent || { $elem : $( '.phone' ) };
         this.children  = [];
 
         // Create DOM element -- store initial state
@@ -40,14 +40,12 @@ export default class Element {
             element.elements.forEach( element => this.children.push( new Element( element, this ) ) );
         }
 
-        this.bind( this.$elem );
-
         if ( this.parent ) {
             this.bind( this.parent.$elem );
         }
 
         // Delegate events and draw
-        return this.delegate( );
+        return this.delegate( ).place( );
     }
 
     delegate ( ) {
@@ -75,32 +73,25 @@ export default class Element {
             self.$elem = ui.draggable;
 
             /* If current element is not already a child of drop point position and rebound */
-            if ( self.parent && self.$elem.parent( )[ 0 ] !== self.parent.$elem[ 0 ] ) {
+            if ( self.$elem.parent( )[ 0 ] !== self.parent.$elem[ 0 ] ) {
                 let parentOffset = self.parent.$elem.offset();
                 let offset = self.$elem.offset();
 
-                /* Recalculate offset */
+                /* Recalculate offset -- Reset draggable bounds -- connect to new parent */
                 self.$elem.detach( )
                           .css( 'top', offset.top - parentOffset.top )
                           .css( 'left', offset.left - parentOffset.left )
+                          .draggable( 'option', { containment: 'parent' } ).droppable( 'option', { hoverClass: 'drop-hover' } )
                           .appendTo( self.parent.$elem );
-
-                self.bind( self.parent.$elem );
-
-                /* Reset draggable bounds -- connect to new parent */
-                return self.$elem.draggable( 'option', { containment: 'parent', connectWith: self.parent.$elem } ).droppable( 'option', { hoverClass: 'drop-hover' } );
             }
         } );
 
         $elem.on( 'dropover', function( event, ui ) {
-            if ( self.parent ) {
-                /* Update parent when context changes */
-                return self.parent.$elem = self.bind( $( this ) );
-            }
+            /* Update parent when context changes */
+            return self.parent.$elem = self.bind( $( this ).droppable( 'option', { hoverClass: 'drop-hover' } ) );
         } );
 
-
-        return this.place( );
+        return this;
     }
 
     bind ( $target ) {
@@ -131,6 +122,7 @@ export default class Element {
         } else {
             this.$elem.appendTo( '.phone' );
         }
+
         return this.draw( );
     }
 
